@@ -1,11 +1,10 @@
-
 //Code from: https://github.com/alexa/alexa-cookbook/blob/master/tools/TestFlow/sampleskill2/helpers.js
 module.exports = {
-    'getSlotValues': function(filledSlots) {
+    'getSlotValues': function (filledSlots) {
         const slotValues = {};
 
         Object.keys(filledSlots).forEach((item) => {
-            const name  = filledSlots[item].name;
+            const name = filledSlots[item].name;
 
             if (filledSlots[item] &&
                 filledSlots[item].resolutions &&
@@ -44,7 +43,9 @@ module.exports = {
 };
 
 // another way to define helpers: extend a native type with a new function
-Array.prototype.diff = function(a) {
-    return this.filter(function(i) {return a.indexOf(i) < 0;});
+Array.prototype.diff = function (a) {
+    return this.filter(function (i) {
+        return a.indexOf(i) < 0;
+    });
 };
 

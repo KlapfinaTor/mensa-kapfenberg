@@ -47,10 +47,12 @@ class MenuDataHelper {
 
                     function parseFoodData(foodString) {
                         let parsedFoodString = foodString.toString();
+
                         parsedFoodString = parsedFoodString.replace(/(\r\n|\n|\r)/gm, " "); //remove all linebreaks
                         parsedFoodString = parsedFoodString.replace(/\(([^)]+)\)/g, " "); //remove round brackets and everything between them
                         parsedFoodString = parsedFoodString.replace(/€..../g, "").trim(); //removes the price and trims
                         parsedFoodString = parsedFoodString.replace(/\s\s+/g, ' '); //replace multiple spaces with only one
+                        parsedFoodString = parsedFoodString.replace(/Suppe/, "Eine Suppe danach");
 
                         return parsedFoodString;
                     }
@@ -151,7 +153,7 @@ class MenuDataHelper {
                         let day = $(this).children('.day-of-week').text();
 
                         if (day === "Mo" || day === "Di" || day === "Mi" || day === "Do" || day === "Fr" || day === "Sa") {
-
+                            $(this).children('.day-content').find('br').replaceWith(' '); // find all <br> and replaces them with space
 
                             //Menu One
                             let menuOneTitle = $(this).children('.day-content').children('.category-first').children('.category-title').text();

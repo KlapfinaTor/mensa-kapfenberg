@@ -23,6 +23,9 @@
           "name": "OpeningHoursIntent",
           "slots": [],
           "samples": [
+            "frage Mensa Kapfenberg nach den Öffnungszeiten",
+            "nach den Öffnungszeiten",
+            "wie sind die Öffnungszeiten",
             "wann gibt es essen",
             "nenne mir die Öffnungszeiten",
             "nenne mir die öffnungszeiten der mensa in kapfenberg",
@@ -42,6 +45,14 @@
             }
           ],
           "samples": [
+            "was es am {weekday} zum essen gibt",
+            "was es am {weekday} zu essen gibt",
+            "nach dem heutigen Menü",
+            "nach den heutigen Menüs",
+            "nach dem heutigen Menüs",
+            "nach dem heutigen essen",
+            "was es {weekday} zum essen gibt",
+            "was es {weekday} zu essen gibt",
             "heutiges essen",
             "nach dem essen am {weekday}",
             "was gibt es zu essen",
@@ -64,6 +75,15 @@
             }
           ],
           "samples": [
+            "welcher allergene das Menü {number} von {weekday} enthält",
+            "nenne mir die allergene im Menü {number} von {weekday}",
+            "nenne mir die allergene im Menü {number}",
+            "welche allergene sind im Menü {number} vorhanden",
+            "welche allergene sind im Menü {number} von {weekday} vorhanden",
+            "welche allergene enthält das Menü {number}",
+            "welche allergene enthält das Menü {number} von {weekday}",
+            "welche allergene sind im Menü {number}",
+            "welche allergene sind im Menü {number} von {weekday} enthalten",
             "welche allergene befinden sich im Menü {number}",
             "welche allergene befinden sich im Menü {number} von {weekday}",
             "welche allergene befinden sich in Menü {number} von {weekday}",
@@ -86,6 +106,7 @@
             }
           ],
           "samples": [
+            "und schalte entwicklung {state}",
             "beispiel daten  {state}",
             "development {state}",
             "beispieldaten {state}",
@@ -98,6 +119,29 @@
         {
           "name": "AMAZON.FallbackIntent",
           "samples": []
+        },
+        {
+          "name": "PriceInfoIntent",
+          "slots": [
+            {
+              "name": "number",
+              "type": "AMAZON.NUMBER"
+            },
+            {
+              "name": "weekday",
+              "type": "AMAZON.DayOfWeek"
+            }
+          ],
+          "samples": [
+            "was kostet das heutige Menü {number}",
+            "was kostet das Menü {number}",
+            "wieviel muss ich für das Menü {number} bezahlen",
+            "was das Menü {number} kostet",
+            "was das Menü {number} von {weekday} kostet",
+            "Was kostet das Menü {number} am {weekday}",
+            "Was kostet das Menü von {weekday}",
+            "Was kostet das Menü {number} von {weekday}"
+          ]
         }
       ],
       "types": [

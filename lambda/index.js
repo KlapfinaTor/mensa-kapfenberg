@@ -3,7 +3,7 @@ const Alexa = require('ask-sdk-core');
 const dataHelper = require('./menuDataHelper');
 const miscHelpers = require('./miscHelpers');
 const HELP_MESSAGE = 'Du kannst mich zum Beispiel fragen: Was gibt es heute zu essen? Welche Allergene befinden sich in Menü 1 von heute? Wie lauten die Öffnungszeiten?';
-const STOP_MESSAGE = 'Servus!';
+const STOP_MESSAGE = 'Mahlzeit!';
 const LAUNCH_MESSAGE = 'Mahlzeit! Frag mich was es heute zu essen gibt!';
 const ERROR_MESSAGE = "Tut mir leid das habe ich leider nicht verstanden. Frag mich nocheinmal!";
 
@@ -48,7 +48,7 @@ const OpeningHoursIntentHandler = {
                 } else {
                     speechOutput = `Die Menü Essenszeiten sind ${data.openingHours}`;
                 }
-                resolve(handlerInput.responseBuilder.speak(speechOutput).reprompt(speechOutput).getResponse());
+                resolve(handlerInput.responseBuilder.speak(speechOutput).getResponse());
             }, demoData);
         });
     }
@@ -76,26 +76,25 @@ const BasicMenuOverviewIntentHandler = {
         //console.log('***** slotValues: ' + JSON.stringify(slotValues, null, 2));
         return new Promise((resolve) => {
             getMenuData((data) => {
-
                 let speechOutput = "none";
                 let currentDay = weekDays[getCurrentDay()];
                 let askedDay = '';
                 let dayprefix = '';
 
-                if (slotValues.weekday === undefined) {
+                if (slotValues.weekday.heardAs === undefined) {
                     dayprefix = 'heute';
                     askedDay = currentDay;
                 } else {
-                    dayprefix = slotValues.weekday.heardAs;
+                    dayprefix = getDayPrefixFromHeardAsDay(slotValues.weekday.heardAs);
                     askedDay = getAskedDay(slotValues.weekday.heardAs)
                 }
 
                 if (data[askedDay] === undefined) {
-                    speechOutput = `${getFullDayNameFromString(askedDay)} gibt es nichts zu essen! Weitere Infos dazu auf www.mensen.at`;
+                    speechOutput = `${getFullDayNameFromString(askedDay)} gibt es keine Menüs! Weitere Infos dazu auf www.mensen.at`;
                 } else {
-                    speechOutput = `${dayprefix} gibt es folgende Menüs: ${data[askedDay].menuOne.title} ${checkMenuVegOrVegan(data[askedDay].menuOne)} : ${data[askedDay].menuOne.food} um ${data[askedDay].menuOne.price} <break time="0.3s"/>
-                     ${data[askedDay].menuTwo.title} ${checkMenuVegOrVegan(data[askedDay].menuTwo)} : ${data[askedDay].menuTwo.food} um ${data[askedDay].menuTwo.price} <break time="0.3s"/>
-                     ${data[askedDay].menuThree.title} ${checkMenuVegOrVegan(data[askedDay].menuThree)}: ${data[askedDay].menuThree.food} um ${data[askedDay].menuThree.price} <break time="0.3s"/> `
+                    speechOutput = `${dayprefix} gibt es folgende Menüs: ${data[askedDay].menuOne.title} ${checkMenuVegOrVegan(data[askedDay].menuOne)} : ${data[askedDay].menuOne.food} <break time="0.3s"/>
+                     ${data[askedDay].menuTwo.title} ${checkMenuVegOrVegan(data[askedDay].menuTwo)} : ${data[askedDay].menuTwo.food} <break time="0.3s"/>
+                     ${data[askedDay].menuThree.title} ${checkMenuVegOrVegan(data[askedDay].menuThree)}: ${data[askedDay].menuThree.food} <break time="0.3s"/> `
                 }
                 resolve(handlerInput.responseBuilder.speak(speechOutput).getResponse());
             }, demoData);
@@ -114,6 +113,85 @@ const AllergenInfoIntentHandler = {
     handle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
         const slotValues = miscHelpers.getSlotValues(request.intent.slots);
+        let reprompt = false;
+
+        //get the sessionattribute for demo data
+        const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
+        let demoData = sessionAttributes['demo'];
+        if (sessionAttributes['demo'] === undefined) {
+            demoData = false;
+        }
+
+        return new Promise((resolve) => {
+            getMenuData((data) => {
+                let speechOutput = ERROR_MESSAGE;
+                let currentDay = weekDays[getCurrentDay()];
+                let askedDay = '';
+                let dayprefix = '';
+                let menuNumber = 0;
+
+                if (slotValues.number.heardAs === undefined) {
+                    console.log("No menunumber selected!");
+                    speechOutput = ('Kein Menü angegeben. Bitte frage mich nocheinmal nach den Allergenen in  Menü 1, 2 oder 3.');
+                    reprompt = true;
+                } else {
+                    if (slotValues.weekday.heardAs === undefined) {
+                        dayprefix = 'heute';
+                        askedDay = currentDay;
+                        console.log("No weekday specified, selecting 'heute'")
+                    } else {
+                        dayprefix = getDayPrefixFromHeardAsDay(slotValues.weekday.heardAs);
+                        askedDay = getAskedDay(slotValues.weekday.heardAs);
+                    }
+                    menuNumber = Number(slotValues.number.heardAs);
+
+                    if (data[askedDay] === undefined) {
+                        speechOutput = `${getFullDayNameFromString(askedDay)} gibt es keine Menüs! Weitere Infos dazu auf www.mensen.at`;
+                    } else {
+                        if (menuNumber === 1) {
+                            if (data[askedDay].menuOne.allergen === 'none') {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet keine Allergene. `
+                            } else {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet folgende Allergene: ${data[askedDay].menuOne.allergen} `
+                            }
+                        } else if (menuNumber === 2) {
+                            if (data[askedDay].menuTwo.allergen === 'none') {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet keine Allergene. `
+                            } else {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet folgende Allergene: ${data[askedDay].menuTwo.allergen} `
+                            }
+
+                        } else if (menuNumber === 3) {
+                            if (data[askedDay].menuThree.allergen === 'none') {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet keine Allergene. `
+                            } else {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet folgende Allergene: ${data[askedDay].menuThree.allergen} `
+                            }
+                        }
+                    }
+                }
+                if (reprompt === true) {
+                    resolve(handlerInput.responseBuilder.speak(speechOutput).reprompt(speechOutput).getResponse());
+                } else {
+                    resolve(handlerInput.responseBuilder.speak(speechOutput).getResponse());
+                }
+            }, demoData);
+        });
+    }
+};
+
+/**
+ * Speaks out the price from the asked menu
+ */
+const PriceInfoIntentHandler = {
+    canHandle(handlerInput) {
+        return Alexa.getRequestType(handlerInput.requestEnvelope) === 'IntentRequest'
+            && Alexa.getIntentName(handlerInput.requestEnvelope) === 'PriceInfoIntent';
+    },
+    handle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        const slotValues = miscHelpers.getSlotValues(request.intent.slots);
+        let reprompt = false;
 
         //get the sessionattribute for demo data
         const sessionAttributes = handlerInput.attributesManager.getSessionAttributes();
@@ -133,30 +211,48 @@ const AllergenInfoIntentHandler = {
                 if (slotValues.number.heardAs === undefined) {
                     console.log("No menunumber selected!");
                     speechOutput = ('Kein Menü angegeben. Bitte probiere es nocheinmal mit Menü 1, Menü 2 oder Menü 3.');
+                    reprompt = true;
                 } else {
                     if (slotValues.weekday.heardAs === undefined) {
                         dayprefix = 'heute';
                         askedDay = currentDay;
                         console.log("No weekday specified, selecting 'heute'")
                     } else {
-                        dayprefix = slotValues.weekday.heardAs;
+                        dayprefix = getDayPrefixFromHeardAsDay(slotValues.weekday.heardAs);
                         askedDay = getAskedDay(slotValues.weekday.heardAs);
                     }
                     menuNumber = Number(slotValues.number.heardAs);
 
                     if (data[askedDay] === undefined) {
-                        speechOutput = `${getFullDayNameFromString(askedDay)} gibt es nichts zu essen! Weitere Infos dazu auf www.mensen.at`;
+                        speechOutput = `${getFullDayNameFromString(askedDay)} gibt es keine Menüs! Weitere Infos dazu auf www.mensen.at`;
                     } else {
                         if (menuNumber === 1) {
-                            speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet folgende Allergene: ${data[askedDay].menuOne.allergen} `
+                            if (data[askedDay].menuOne.price === "none") {
+                                speechOutput = `Zum Menü ${menuNumber} von ${dayprefix} wurde kein Preis angegeben.`
+                            } else {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} kostet: ${data[askedDay].menuOne.price} `
+                            }
+
                         } else if (menuNumber === 2) {
-                            speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet folgende Allergene: ${data[askedDay].menuTwo.allergen} `
+                            if (data[askedDay].menuTwo.price === "none") {
+                                speechOutput = `Zum Menü ${menuNumber} von ${dayprefix} wurde kein Preis angegeben.`
+                            } else {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} kostet: ${data[askedDay].menuTwo.price} `
+                            }
                         } else if (menuNumber === 3) {
-                            speechOutput = `Das Menü ${menuNumber} von ${dayprefix} beinhaltet folgende Allergene: ${data[askedDay].menuThree.allergen} `
+                            if (data[askedDay].menuThree.price === "none") {
+                                speechOutput = `Zum Menü ${menuNumber} von ${dayprefix} wurde kein Preis angegeben.`
+                            } else {
+                                speechOutput = `Das Menü ${menuNumber} von ${dayprefix} kostet: ${data[askedDay].menuThree.price} `
+                            }
                         }
                     }
                 }
-                resolve(handlerInput.responseBuilder.speak(speechOutput).getResponse());
+                if (reprompt === true) {
+                    resolve(handlerInput.responseBuilder.speak(speechOutput).reprompt(speechOutput).getResponse());
+                } else {
+                    resolve(handlerInput.responseBuilder.speak(speechOutput).getResponse());
+                }
             }, demoData);
         });
     }
@@ -189,7 +285,7 @@ const SetDemoIntentHandler = {
                 sessionAttributes['demo'] = 'false';
                 state = 'aus'
         }
-        speechOutput = `Demo Daten sind ${state} . Frag mich was es zu essen gibt!`;
+        speechOutput = `Demo Daten sind ${state} . Frag mich was es heute zu essen gibt!`;
         handlerInput.attributesManager.setSessionAttributes(sessionAttributes);
 
         return handlerInput.responseBuilder
@@ -296,6 +392,34 @@ function getFullDayNameFromString(day) {
     }
 }
 
+function getDayPrefixFromHeardAsDay(day) {
+    day = day.toLowerCase();
+    switch (day) {
+        case 'montag':
+            return 'Montag';
+        case 'dienstag':
+            return 'Dienstag';
+        case 'mittwoch':
+            return 'Mittwoch';
+        case 'donnerstag':
+            return 'Donnerstag';
+        case 'freitag':
+            return 'Freitag';
+        case 'samstag':
+            return 'Samstag';
+        case 'sonntag':
+            return 'Sonntag';
+        case 'heute':
+            return 'heute';
+        case 'morgen':
+            return 'morgen';
+        case 'übermorgen':
+            return 'übermorgen';
+        default:
+            return 'heute';
+    }
+}
+
 function getCurrentDay() {
     let d = new Date();
     return d.getDay()
@@ -308,10 +432,19 @@ function getAskedDay(day) {
             askedDay = weekDays[getCurrentDay()];
             break;
         case 'morgen':
-            askedDay = weekDays[getCurrentDay() + 1];
+            if (getCurrentDay() === 7) {
+                askedDay = weekDays[1];
+            } else {
+                askedDay = weekDays[getCurrentDay() + 1];
+            }
             break;
         case 'übermorgen':
             askedDay = weekDays[getCurrentDay() + 2];
+            if (getCurrentDay() === 6) {
+                askedDay = weekDays[1];
+            } else if (getCurrentDay() === 7) {
+                askedDay = weekDays[2];
+            }
             break;
         case 'montag':
             askedDay = weekDays[1];
@@ -358,6 +491,7 @@ exports.handler = Alexa.SkillBuilders.custom()
         LaunchRequestHandler,
         BasicMenuOverviewIntentHandler,
         AllergenInfoIntentHandler,
+        PriceInfoIntentHandler,
         OpeningHoursIntentHandler,
         SetDemoIntentHandler,
         HelpIntentHandler,
